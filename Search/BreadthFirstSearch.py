@@ -47,7 +47,7 @@ class nodeNetwork:
 
 
 #Input is a network of nodes, queue of nodes to be searched, stop if the end node is ever reached
-def BFS(nN, queue, tries):
+def BFS(nN, queue, tries, sNodes):
 
 	#Capture parent node
 	# print(f"Queue: {queue}")
@@ -58,23 +58,30 @@ def BFS(nN, queue, tries):
 	newPaths = nN.getNodeNeighbors(parentNode)
 	# print(f"New path: {newPaths}\n")
 
+	tempList = []
 	#Add new path to queue
 	for i in range(len(newPaths)):
-		newPaths[i] = queue[0]+","+newPaths[i]
-		queue.append(newPaths[i])
+		if newPaths[i] not in sNodes:
+			sNodes.append(newPaths[i])
+		elif newPaths[i] in sNodes: #Skip pathes that have already been searched
+			# print(f"Searched Nodes: {sNodes}")
+			continue
+		tempList = queue[0]+","+newPaths[i]
+		queue.append(tempList)
 		#Test for success
 		splitPath = newPaths[i].split(',')
 		if 'E' in splitPath:
 			# print(f"\nFOUND, in {tries} tries!!! {newPaths[i]}\n\n")
-			return newPaths[i], tries
+			return tempList, tries
 	queue = queue[1:]
+	print(f"\nQueue :: {queue}")
 
 	tries+=1
 
 	if tries>=100:
 		return 'Fail', tries
 	else:
-		successPath, tries = BFS(nN,queue,tries)
+		successPath, tries = BFS(nN,queue,tries,sNodes)
 
 	return successPath, tries
 
@@ -110,7 +117,7 @@ def main():
 
 	# Create BMS list of paths
 	queue = [nNetwork.nodes[0].name]
-	bfsPath, tries = BFS(nNetwork, queue, 0)
+	bfsPath, tries = BFS(nNetwork, queue, 0, ['S'])
 
 	# #Check for success
 	if bfsPath == 'Fail':

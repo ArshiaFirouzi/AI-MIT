@@ -63,18 +63,18 @@ def DFS(nN, queue, tries, sNodes):
 	for i in range(len(newPaths)):
 		if newPaths[i] not in sNodes:
 			sNodes.append(newPaths[i])
-		elif newPaths[i] in sNodes:
+		elif newPaths[i] in sNodes: #Skip pathes that have already been searched
 			# print(f"Searched Nodes: {sNodes}")
 			continue
 		tempList.append(queue[0]+","+newPaths[i])
 		#Test for success
 		splitPath = newPaths[i].split(',')
 		if 'E' in splitPath:
-			# print(f"\nFOUND, in {tries} tries!!! {newPaths[i]}\n\n")
-			return newPaths[i], tries
+			return tempList[-1], tries
 	# print(f"Temp List: {tempList}")
 	queue = queue[1:]
 	queue = tempList + queue
+	print(f"\nQueue :: {queue}")
 
 	tries+=1
 
