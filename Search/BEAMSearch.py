@@ -1,0 +1,165 @@
+# BEAM Search Algorithm
+# Similar to breadth first, uses a positional heuristic as well
+# S is the start point, E in the target end
+
+# import networkx as nx
+# import matplotlib.pyplot as plt
+import time
+import random
+import string
+import math
+
+
+
+class node:
+
+	def __init__(self, name, neighbors, position, ePos):
+		self.name = name #String
+		self.neighbors = neighbors #List of strings (node names)
+		self.position = position #2nd order list of this node's xy-position
+		# We know the end is at position(1.75, 1.5)
+		self.distToEnd = distance(self.position,ePos)
+
+	def addNeighbor(self,nName):
+		nName = str(nName)
+		self.neighbors.append(nName)
+		print(f"Neighbor {nName} added.")
+
+
+
+class nodeNetwork:
+
+	def __init__(self, nodes):
+		self.nodes = nodes
+		self.numNodes = len(nodes)
+
+	def getNodeNeighbors(self, nName):
+		for i in range(len(self.nodes)):
+			if str(self.nodes[i].name) == str(nName):
+				return self.nodes[i].neighbors
+
+	def getNodePosition(self, nName):
+		for i in range(len(self.nodes)):
+			if str(self.nodes[i].name) == str(nName):
+				return self.nodes[i].position
+
+	def getNodeDistance(self, nName):
+		for i in range(len(self.nodes)):
+			if str(self.nodes[i].name) == str(nName):
+				return self.nodes[i].distToEnd
+
+
+
+
+
+#Input is a network of nodes, queue of nodes to be searched, stop if the end node is ever reached
+def BEAM(nN, queue, tries, sNodes, width):
+
+	#Capture parent node
+	print(f"Queue: {queue}")
+	parentNode = (queue[0].split(','))[-1]
+	# print(f"Parent Node: {parentNode}")
+
+	#Create parent's new path
+	newPaths = nN.getNodeNeighbors(parentNode)
+	# print(f"\nNew path: {newPaths}")
+
+	#Heuristic Sort
+	sortingPath = []
+	# print(f"\nnewPaths :: {newPaths}")
+	for i in range(len(newPaths)):
+		if nN.getNodeDistance(newPaths[i])==None:
+			sortingPath.append([0, newPaths[i]])
+		else:
+			sortingPath.append([nN.getNodeDistance(newPaths[i]),newPaths[i]])
+	sortingPath = sorted(sortingPath)
+	# print(f"Sorted newPaths :: {sortingPath}")
+
+	sortedPaths = []
+	for i in range(len(sortingPath)):
+		sortedPaths.append(sortingPath[i][1])
+	newPaths = sortedPaths
+
+	tempList = []
+	#Add new path to queue
+	for i in range(min(width,len(newPaths))):
+		# print(f"Node {newPaths[i]} Distance to End: {nN.getNodeDistance(newPaths[i])}")
+		if newPaths[i] not in sNodes:
+			sNodes.append(newPaths[i])
+		elif newPaths[i] in sNodes: #Skip pathes that have already been searched
+			# print(f"Searched Nodes: {sNodes}")
+			continue
+		tempList = queue[0]+","+newPaths[i]
+		queue.append(tempList) 
+		#Test for success
+		splitPath = newPaths[i].split(',')
+		if 'E' in splitPath:
+			# print(f"\nFOUND, in {tries} tries!!! {newPaths[i]}\n\n")
+			return tempList, tries
+	queue = queue[1:]
+
+	tries+=1
+
+	if tries>=100:
+		return 'Fail', tries
+	else:
+		successPath, tries = BEAM(nN,queue,tries,sNodes,width)
+
+	return successPath, tries
+
+
+
+def distance(sPos, ePos):
+	xdiff = abs(sPos[0]-ePos[0])
+	ydiff = abs(sPos[1]-ePos[1])
+	distance = math.sqrt(pow(xdiff,2)+pow(ydiff,2))
+	return distance
+
+
+
+
+
+def main():
+
+	#Start Time
+	sT = time.time()
+
+	# Create network matching the image: 'Search Space.png'
+	# Networks can easily be created using the random package and a dictionary of names matching node neighbors and position
+	nS = node('S',['6','7','8','9'],(0,0),(1.75,1.5))
+	n1 = node('1',['4'],(-2,1.5),(1.75,1.5))
+	n2 = node('2',['4','5'],(-2,0.75),(1.75,1.5))
+	n3 = node('3',['7'],(-1,-1),(1.75,1.5))
+	n4 = node('4',['1','2','6'],(-1,1),(1.75,1.5))
+	n5 = node('5',['2','6','7'],(-1,0),(1.75,1.5))
+	n6 = node('6',['4','5','8','S'],(-0.5,0.5),(1.75,1.5))
+	n7 = node('7',['3','5','S'],(-0.5,-0.75),(1.75,1.5))
+	n8 = node('8',['6','S','10'],(0,1),(1.75,1.5))
+	n9 = node('9',['11','12','S'],(0.75,-0.5),(1.75,1.5))
+	n10 = node('10',['8','12','E'],(1,1),(1.75,1.5))
+	n11 = node('11',['9','12'],(1.5,-1),(1.75,1.5))
+	n12 = node('12',['9','10','11','E'],(1.5,-0.25),(1.75,1.5))
+	nE = node('E',['10','12'],(1.75,1.5),(1.75,1.5))
+	nodes = [nS,n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12]
+
+	# Init network
+	nNetwork = nodeNetwork(nodes)
+
+	# Create BMS list of paths
+	queue = [nNetwork.nodes[0].name]
+	beamPath, tries = BEAM(nNetwork, queue, 0, ['S'], 2)
+
+	# #Check for success
+	if beamPath == 'Fail':
+		print("\nFAILURE!")
+		print(f"Path not found in {tries} tries.\n")
+	else:
+		print("\nSUCCESS!")
+		print(f"Path = {beamPath} :: Found in {tries+1} tries.\n")
+
+	eT = time.time()
+	print(f"Elapsed Time: {eT-sT}\n")
+
+
+
+main()
